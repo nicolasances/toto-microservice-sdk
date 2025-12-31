@@ -10,7 +10,9 @@ Python framework for building cloud-agnostic microservices with FastAPI.
    - [3.1. Create and Register APIs](#31-create-and-register-apis)
    - [3.2. Use a Message Bus](#32-use-a-message-bus)
    - [3.3. Load Secrets](#33-load-secrets)
-4. [License](#license)
+   - [3.4. Custom Configurations](#34-custom-configurations)
+4. [Reference: Toto Microservice Configuration](#4-reference-toto-microservice-configuration)
+5. [License](#license)
 
 ## 1. Installation
 
