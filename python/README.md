@@ -14,6 +14,9 @@ Python framework for building cloud-agnostic microservices with FastAPI.
 4. [Reference: Toto Microservice Configuration](#4-reference-toto-microservice-configuration)
 5. [License](#license)
 
+Other: 
+* [Build and Publish guide](./docs/buildpublish.md)
+
 ## 1. Installation
 
 ```bash
