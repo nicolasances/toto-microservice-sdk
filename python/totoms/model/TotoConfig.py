@@ -110,26 +110,6 @@ class TotoControllerConfig(ABC):
         """Get the MongoDB password."""
         return self._mongo_pwd
     
-    @abstractmethod
-    def get_api_name(self) -> str:
-        """
-        Get the name of this API.
-        
-        Returns:
-            The API name (e.g., 'topics', 'challenges', 'practice')
-        """
-        pass
-    
-    @abstractmethod
-    def get_expected_audience(self) -> str:
-        """
-        Get the expected audience for JWT validation.
-        
-        Returns:
-            The expected audience
-        """
-        pass
-    
     def get_mongo_secret_names(self) -> Optional[Dict[str, str]]:
         """
         Get the names of Mongo secrets to load.
