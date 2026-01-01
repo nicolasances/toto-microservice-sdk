@@ -132,40 +132,40 @@ This is how you define a Toto Delegate. <br>
 import { TotoDelegate, UserContext } from 'totoms';
 import { Request } from 'express';
 
-class CreateUserDelegate implements TotoDelegate {
-    async do(req: Request, userContext: UserContext, config: any) {
+class CreateUserDelegate extends TotoDelegate {
+
+    async do(req: Request, userContext?: UserContext): Promise<any> {
+
         // Extract data from the request
         const { name, email } = req.body;
         
         // Your business logic here
-        const userId = await createUser(name, email);
+        ...
         
-        // Return the response
+        // Return the response (anything you'd like)
         return { 
-            userId, 
-            status: "success" 
+            ..., 
         };
     }
 }
 ```
 
 #### Register Your Delegate
-
-You can now register your endpoints with the API controller:
+You can now register your delegate with its endpoint (path, route) in the `TotoMicroserviceConfiguration` object that we saw earlier. 
 
 ```typescript
-import { TotoAPIController } from 'totoms';
-
-const api = new TotoAPIController(config, { basePath: '/myservice' });
-
-// Register the endpoint
-api.path('POST', '/users', new CreateUserDelegate());
-
-// Start listening
-api.listen();
+const config: TotoMicroserviceConfiguration = {
+    serviceName: "toto-ms-ex1",
+    basePath: '/ex1',
+    environment: ...,
+    ...
+    apiConfiguration: {
+        apiEndpoints: [
+            { method: 'POST', path: '/users', delegate: CreateUserDelegate }
+        ]
+    }, 
+};
 ```
-
-The microservice will start an Express application with all registered endpoints available at the specified base path.
 
 ---
 
