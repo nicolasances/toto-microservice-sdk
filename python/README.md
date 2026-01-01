@@ -1,6 +1,8 @@
 # Toto Microservice SDK - Python
 
-Python framework for building cloud-agnostic microservices with FastAPI.
+The Toto Microservice SDK is a framework for building cloud-agnostic microservices. <br>
+This is the Python SDK documentation. 
+
 
 ## Table of Contents
 
@@ -11,8 +13,6 @@ Python framework for building cloud-agnostic microservices with FastAPI.
    - [3.2. Use a Message Bus](#32-use-a-message-bus)
    - [3.3. Load Secrets](#33-load-secrets)
    - [3.4. Custom Configurations](#34-custom-configurations)
-4. [Reference: Toto Microservice Configuration](#4-reference-toto-microservice-configuration)
-5. [License](#license)
 
 Other: 
 * [Build and Publish guide](./docs/buildpublish.md)
@@ -24,7 +24,7 @@ pip install totoms
 ```
 
 ## 2. Overview
-Everything starts with `TotoMicroservice`.<br>
+Everything starts with `TotoMicroservice` and the `TotoMicroserviceConfiguration`.<br>
 `TotoMicroservice` is the main orchestrator that coordinates your entire microservice. It initializes and manages:
 
 - **API Controller & API Endpoints**: FastAPI-based REST API setup with automatic endpoint registration
@@ -32,7 +32,35 @@ Everything starts with `TotoMicroservice`.<br>
 - **Secrets Management**: Automatic loading of secrets from your cloud provider
 - **Service Lifecycle**: Initialization, startup, and shutdown management
 
-The configuration is **declarative** - you create a `TotoMicroserviceConfiguration` object that specifies:
+The configuration is **declarative**. The goal is to make it very simple to configure a full microservice, with a syntax that will look like this: 
+```python 
+  TotoMicroserviceConfiguration(
+        service_name="toto-ms-tome-scraper",
+        base_path="/tomescraper",
+        environment=TotoEnvironment(
+            hyperscaler=os.getenv("HYPERSCALER", "aws").lower(),
+            hyperscaler_configuration=determine_envrionment()
+        ),
+        custom_config=TomeScraperConfig,
+        api_configuration=APIConfiguration(
+            api_endpoints=[
+                APIEndpoint(method="POST", path="/blogs", delegate=extract_blog_content),
+                APIEndpoint(method="POST", path="/test/refresher", delegate=test_refresher),
+                APIEndpoint(method="POST", path="/test/pubsub", delegate=test_pubsub),
+            ]
+        ),
+        message_bus_configuration=MessageBusConfig(
+            topics=[
+                MessageBusTopicConfig(logical_name="tometopics", secret="tome_topics_topic_name")
+            ], 
+            message_handlers=[
+                MessageBusHandlerConfig(handler_class=TopicRefreshedEventHandler)
+            ]
+        ),
+    )
+```
+
+The `TotoMicroserviceConfiguration` object specifies:
 
 - **Service Metadata**: Service name and base path for API endpoints
 - **Environment**: Cloud provider (AWS, GCP, Azure) information
@@ -49,7 +77,10 @@ await microservice.start(port=8080)
 
 ## 3. Usage
 
-### 3.1. Create and Register APIs
+### 3.1. The Toto Microservice Configuration
+Go to the [Toto Microservice Configuration](./docs/toto_microservice_configuration.md) API Reference page.
+
+### 3.2. Create and Register APIs
 
 Your microservice exposes REST API endpoints using FastAPI. <br>
 Endpoints are defined when creating the microservice configuration and are automatically set up with the API controller.
@@ -96,6 +127,7 @@ def get_microservice_config() -> TotoMicroserviceConfiguration:
 
 The microservice will start a FastAPI application with all registered endpoints available at the specified base path.
 
+---
 ### 3.2. Use a Message Bus
 
 The Message Bus enables event-driven communication between microservices.<br>
@@ -209,6 +241,7 @@ There are different ways to get access to the Message Bus instance:
 * In a `toto_delegate`, you will have it part of `ExecutionContext` and can use like this: <br>
 `exec_context.message_bus`
 
+---
 ### 3.3. Load Secrets
 
 The SDK handles secret loading from your cloud provider automatically. Access secrets through the configuration or use the `SecretsManager` directly:
@@ -225,6 +258,7 @@ database_url = secrets.get_secret("database-url")
 
 Secrets are typically stored as environment variable names or secret manager references, depending on your deployment environment.
 
+---
 ### 3.4. Custom Configurations
 You can define your own custom configurations by extending the `TotoControllerConfig` base class.
 
@@ -245,79 +279,3 @@ What you can do with a Custom Configuration:
 
 1. **Load Secrets** <br>
 You can do that by overriding the `load()` async method and using `self.secrets_manager.get_secret, "your-secret-name")` to load secrets.
-
-
-## 4. Reference: Toto Microservice Configuration
-This is a full example of an `app.py` root that configures a `TotoMicroservice`. 
-
-```python 
-import asyncio
-import os
-from config.config import TomeScraperConfig
-from evt.handlers.TopicRefreshedMH import TopicRefreshedEventHandler
-from totoms import (
-    MessageBusHandlerConfig,
-    TotoMicroservice,
-    TotoMicroserviceConfiguration,
-    TotoEnvironment,
-    APIConfiguration,
-)
-from totoms.TotoMicroservice import APIEndpoint, determine_environment, MessageBusTopicConfig, MessageBusConfig
-
-from dlg.scrape import extract_blog_content
-...
-
-def get_microservice_config() -> TotoMicroserviceConfiguration:
-    
-    return TotoMicroserviceConfiguration(
-        service_name="toto-ms-tome-scraper",
-        base_path="/tomescraper",
-        environment=TotoEnvironment(
-            hyperscaler=os.getenv("HYPERSCALER", "aws").lower(),
-            hyperscaler_configuration=determine_envrionment()
-        ),
-        custom_config=TomeScraperConfig,
-        api_configuration=APIConfiguration(
-            api_endpoints=[
-                APIEndpoint(method="POST", path="/blogs", delegate=extract_blog_content),
-                APIEndpoint(method="POST", path="/test/refresher", delegate=test_refresher),
-                APIEndpoint(method="POST", path="/test/pubsub", delegate=test_pubsub),
-            ]
-        ),
-        message_bus_configuration=MessageBusConfig(
-            topics=[
-                MessageBusTopicConfig(logical_name="tometopics", secret="tome_topics_topic_name")
-            ], 
-            message_handlers=[
-                MessageBusHandlerConfig(handler_class=TopicRefreshedEventHandler)
-            ]
-        ),
-    )
-
-
-async def main():
-    
-    microservice = await TotoMicroservice.init(get_microservice_config())
-
-    port = int(os.getenv("PORT", "8080"))
-    
-    await microservice.start(port=port)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-The following fields are defined in `TotoMicroserviceConfiguration`: 
-* `service_name` - logical name of your microservice. Mostly used for logging.
-* `base_path` - **Very Important** - add this to have your microservice exposed on a base path. It's very useful for routing. <br>
-Example: `/tomescraper` as a basepath will mean that your service will be exposed on `<whatever-domain-you-have-configured>/tomescraper/<....your routes>`
-* `environment` - defines in which environment your service will run: 
-    * `hyperscaler` - defines whether it runs on AWS, GCP or Azure
-    * `hyperscaler_configuration` - defines hyperscaler-specific configurations (e.g. region for AWS, project id for GCP, etc...). <br>
-    The function `determine_envrionment()` is a utility function that automatically determines the environment configuration based on Environment Variables
-* `custom_config` - defines any custom configuration you have. This is a **mandatory** field.
-
-## License
-
-MIT License - see LICENSE file for details
