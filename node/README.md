@@ -76,6 +76,10 @@ TotoMicroservice.init(config).then(microservice => {
 });
 ```
 
+A **few things you should pay attention to**: 
+* `ControllerConfig` - that's your custom configuration class, that you can use to do any type of custom initialization and work (e.g. loading secrets). <br>
+You can find [more details in this section](#31-the-toto-microservice-configuration)
+
 The `TotoMicroserviceConfiguration` object specifies:
 
 - **Service Metadata**: Service name and base path for API endpoints
@@ -88,32 +92,28 @@ The `TotoMicroserviceConfiguration` object specifies:
 
 ### 3.1. The Toto Microservice Configuration
 
-The microservice is configured through the `TotoMicroserviceConfiguration` object and the `TotoControllerConfig` base class.
+The microservice is configured through the `TotoMicroserviceConfiguration` object and the `TotoControllerConfig` base class. <br>
+As seen above, you need to define a **Custom Configuration Class** that extends the `TotoControllerConfig` base class as shown below here. 
 
 ```typescript
 import { TotoControllerConfig } from 'totoms';
 
-export class MyControllerConfig extends TotoControllerConfig {
-    
-    mongoUser: string | undefined;
-    mongoPwd: string | undefined;
-    
-    getMongoSecretNames() {
-        return { 
-            userSecretName: 'my-mongo-user', 
-            pwdSecretName: 'my-mongo-pswd' 
-        };
+export class ControllerConfig extends TotoControllerConfig {
+
+    getMongoSecretNames(): { userSecretName: string; pwdSecretName: string; } | null {
+        return null;
     }
-    
-    getDBName() { 
-        return 'mydb' 
+
+    getProps(): APIOptions {
+        return {}
     }
-    
-    getCollections() { 
-        return { users: 'users' } 
-    }
+
 }
 ```
+
+Some things to **note**: 
+* The `getMongoSecretNames()` method allows you to define the name of the Secrets containing user and pswd of your Mongo DB, if you choose to use it (stored in the Cloud Secrets Manager, depending on the cloud you're deploying to). 
+* The `getProps()` method allows you to do some overrides (e.g. no authentication for this service). You can explore the properties, they're well documented in the SDK.
 
 ### 3.2. Create and Register APIs
 
