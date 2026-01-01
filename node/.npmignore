@@ -1,0 +1,56 @@
+# Directories
+node_modules/
+coverage/
+.nyc_output/
+tmp/
+temp/
+logs/
+
+# Source files (only include compiled output)
+*.ts
+!*.d.ts
+tsconfig.json
+tsconfig.*.json
+
+# Development files
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+test/
+tests/
+__tests__/
+
+# Build artifacts
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.travis.yml
+.circleci/
+azure-pipelines.yml
+
+# Documentation
+docs/
+examples/
+
+# Misc
+*.tgz
+.eslintrc*
+.prettierrc*
