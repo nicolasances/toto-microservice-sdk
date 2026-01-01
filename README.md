@@ -16,5 +16,5 @@ The SDK covers aspects such as:
 
 ## Language Support
 At the moment the following languages or frameworks are supported and you can follow the links to get access to the language-specific documentation: 
-* [NodeJS (Typescript)]()
+* [NodeJS (Typescript)](./node/README.md)
 * [Python](./python/README.md)
