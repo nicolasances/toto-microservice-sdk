@@ -17,7 +17,7 @@ export { ConfigMock, LazyValidator, ValidationError, Validator } from './validat
 export { RegistryCache } from './integration/RegistryCache'
 export { TotoRegistryAPI } from './integration/TotoRegistryAPI'
 export { TotoAPI, TotoAPIRequest, TotoAPIResponseConstructor } from './integration/TotoAPI'
-export { TotoMicroservice, TotoMicroserviceConfiguration } from './core/TotoMicroservice'
+export { TotoMicroservice, TotoMicroserviceConfiguration, getHyperscalerConfiguration } from './core/TotoMicroservice'
 export { TotoEnvironment, SupportedHyperscalers, AWSConfiguration, AzureConfiguration, GCPConfiguration } from './model/TotoEnvironment'
 export { TotoMessageBus, MessageHandlerRegistrationOptions, TopicIdentifier, TotoMessageBusConfiguration } from './evt/MessageBus';
 export { IPubSub, IMessageBus, IQueue, APubSubRequestFilter, APubSubRequestValidator, MessageDestination } from './evt/IMessageBus';

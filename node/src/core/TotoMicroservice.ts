@@ -1,4 +1,4 @@
-import { TopicIdentifier, TotoMessageBus, TotoMessageHandler, TotoControllerConfig, TotoAPIController, SecretsManager, Logger, APIConfiguration, TotoEnvironment } from '..';
+import { TopicIdentifier, TotoMessageBus, TotoMessageHandler, TotoControllerConfig, TotoAPIController, SecretsManager, Logger, APIConfiguration, TotoEnvironment, GCPConfiguration, AzureConfiguration, AWSConfiguration, SupportedHyperscalers } from '..';
 
 export class TotoMicroservice {
 
@@ -51,7 +51,7 @@ export class TotoMicroservice {
             const bus = new TotoMessageBus({
                 controller: apiController,
                 customConfig: customConfig,
-                topics: topicNames, 
+                topics: topicNames,
                 environment: config.environment
             });
 
@@ -92,11 +92,30 @@ export interface TotoMicroserviceConfiguration {
     basePath?: string;
     environment: TotoEnvironment;
     customConfiguration: new (secretsManager: SecretsManager) => TotoControllerConfig;
-    apiConfiguration: APIConfiguration; 
+    apiConfiguration: APIConfiguration;
     messageBusConfiguration?: MessageBusConfiguration;
 }
 
 export interface MessageBusConfiguration {
     topics: { logicalName: string; secret: string }[];
     messageHandlers?: (new (config: TotoControllerConfig) => TotoMessageHandler)[];
+}
+
+export function getHyperscalerConfiguration(): GCPConfiguration | AWSConfiguration | AzureConfiguration {
+
+    const hyperscaler = process.env.HYPERSCALER as SupportedHyperscalers || "aws";
+
+    switch (hyperscaler) {
+        case "gcp":
+            return { gcpProjectId: process.env.GCP_PROJECT_ID || "" } as GCPConfiguration;
+        case "aws":
+            return {
+                awsRegion: process.env.AWS_REGION || "eu-north-1",
+                environment: process.env.ENVIRONMENT as "dev" | "test" | "prod" || "dev"
+            } as AWSConfiguration;
+        case "azure":
+            return { azureRegion: process.env.AZURE_REGION || "" } as AzureConfiguration;
+        default:
+            throw new Error(`Unsupported hyperscaler: ${hyperscaler}`);
+    }
 }
