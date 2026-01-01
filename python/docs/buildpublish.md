@@ -3,7 +3,7 @@
 To build and publish a new version on Pypi follow this guide. 
 
 ## Building the package
-To **build** the package, run: 
+To **build** the package, first make sure that ´build´ is installed (`pip install build`) and then run: 
 ```
 python -m build
 ```

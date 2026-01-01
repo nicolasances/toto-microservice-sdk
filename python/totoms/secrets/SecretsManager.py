@@ -4,9 +4,9 @@ import os
 from typing import Union, cast
 
 import boto3
+from botocore.exceptions import ClientError
 from google.cloud import secretmanager
 
-from agent.refresher import ClientError
 from totoms.TotoLogger import TotoLogger
 from totoms.model.TotoEnvironment import AWSConfiguration, GCPConfiguration, TotoEnvironment
 
