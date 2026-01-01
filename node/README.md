@@ -50,21 +50,30 @@ Everything starts with `TotoMicroservice` and the `TotoMicroserviceConfiguration
 The configuration is **declarative**. The goal is to make it very simple to configure a full microservice, with a syntax that will look like this:
 
 ```typescript
-import { TotoMicroservice, TotoMicroserviceConfiguration } from 'totoms';
+import { getHyperscalerConfiguration, SupportedHyperscalers, TotoMicroservice, TotoMicroserviceConfiguration } from 'totoms';
+import { ControllerConfig } from "./Config";
+import { SayHello } from './dlg/ExampleDelegate';
+
 
 const config: TotoMicroserviceConfiguration = {
-    serviceName: "my-service",
-    basePath: '/myservice',
+    serviceName: "toto-ms-ex1",
+    basePath: '/ex1',
     environment: {
-        hyperscaler: "aws", // or "gcp", "azure"
-        aws: {
-            region: "us-east-1"
-        }
+        hyperscaler: process.env.HYPERSCALER as SupportedHyperscalers || "aws",
+        hyperscalerConfiguration: getHyperscalerConfiguration()
     },
-    config: new MyControllerConfig()
+    customConfiguration: ControllerConfig,
+    apiConfiguration: {
+        apiEndpoints: [
+            { method: 'GET', path: '/hello', delegate: SayHello }
+        ],
+        apiOptions: { noCorrelationId: true }
+    }, 
 };
 
-await TotoMicroservice.init(config);
+TotoMicroservice.init(config).then(microservice => {
+    microservice.start();
+});
 ```
 
 The `TotoMicroserviceConfiguration` object specifies:
