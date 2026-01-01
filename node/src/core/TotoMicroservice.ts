@@ -107,7 +107,7 @@ export function getHyperscalerConfiguration(): GCPConfiguration | AWSConfigurati
 
     switch (hyperscaler) {
         case "gcp":
-            return { gcpProjectId: process.env.GCP_PROJECT_ID || "" } as GCPConfiguration;
+            return { gcpProjectId: process.env.GCP_PID || "" } as GCPConfiguration;
         case "aws":
             return {
                 awsRegion: process.env.AWS_REGION || "eu-north-1",
