@@ -61,6 +61,12 @@ from totoms.TotoLogger import TotoLogger
 # Utilities
 from totoms.secrets.SecretsManager import SecretsManager
 
+# Storage
+from totoms.storage.CloudStorage import CloudStorage
+
+# Exceptions
+from totoms.model.exceptions.ValidationError import ValidationError
+
 __all__ = [
     # Microservice
     "TotoMicroservice",
@@ -97,4 +103,8 @@ __all__ = [
     "TotoLogger",
     # Secrets
     "SecretsManager",
+    # Storage
+    "CloudStorage",
+    # Exceptions
+    "ValidationError",
 ]

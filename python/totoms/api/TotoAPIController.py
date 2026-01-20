@@ -12,12 +12,14 @@ from typing import Callable, Dict, List, Optional, Any
 from enum import Enum
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from totoms.TotoLogger import TotoLogger
 from totoms.api.APIControllerProps import APIControllerProps
 from totoms.api.APIControllerOptions import APIControllerOptions
 from totoms.model.PathOptions import PathOptions
 from totoms.model.TotoAPIEndpoint import APIEndpoint
+from totoms.model.exceptions.ValidationError import ValidationError
 
 
 class HTTPMethod(str, Enum):
@@ -65,8 +67,9 @@ class TotoAPIController:
         # Initialize FastAPI middleware
         self._setup_middleware()
         
-        # Register standard Toto paths
+        # Register standard Toto paths and exception handlers
         self._register_standard_paths()
+        self._register_exception_handlers()
     
     def _setup_middleware(self) -> None:
         """Set up FastAPI middleware for CORS, etc."""
@@ -78,6 +81,18 @@ class TotoAPIController:
             allow_methods=["*"],
             allow_headers=["*", "x-correlation-id", "x-msg-id", "auth-provider", "x-app-version", "x-client", "x-client-id"],
         )
+    
+    def _register_exception_handlers(self) -> None:
+        """
+        Register standard exception handlers for the API controller.
+        """
+        # Register Validation Error
+        @self.app.exception_handler(ValidationError)
+        async def validation_error_handler(request: Request, exc: ValidationError):
+            return JSONResponse(
+                status_code=400,
+                content={"code": 400, "detail": exc.message},
+            )
     
     def _register_standard_paths(self) -> None:
         """Register standard Toto paths (smoke test, health check, etc.)."""
