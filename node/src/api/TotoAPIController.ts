@@ -92,9 +92,11 @@ export class TotoAPIController {
         // Create an OpenAPI docs endpoint if the spec is available
         if (options?.openAPISpecification?.localSpecsFilePath) {
             
+            const correctedPath = this.options.basePath ? this.options.basePath.replace(/\/$/, '').trim() + '/apidocs' : '/apidocs';
+            
             const swaggerDocument = yaml.load( fs.readFileSync(options.openAPISpecification.localSpecsFilePath, 'utf8') ) as swaggerUi.JsonObject;
 
-            this.app.use('/apidocs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+            this.app.use(correctedPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument));
         }
 
         // Bindings
