@@ -181,6 +181,8 @@ To do that, you need to add the following to your `TotoMicroserviceConfiguration
 
 After this the API Documentation will be available at: `http(s)://<your-microservice-host>:<port>/<base-path>/apidocs` <br>
 
+**IMPORTANT** - API Documentation is ALSO available as a JSON endpoint at: `http(s)://<your-microservice-host>:<port>/<base-path>/jsondocs` <br>
+
 ---
 
 ### 3.3. Use a Message Bus
