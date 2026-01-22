@@ -1,5 +1,9 @@
 import { TotoControllerConfig, TotoDelegate, TotoMessageBus } from "..";
 
+export interface OpenAPISpecification {
+    localSpecsFilePath?: string; // Path to a local OpenAPI specification file - example: './openapi.yaml'
+}
+
 export interface APIConfiguration {
 
     /**
@@ -11,6 +15,11 @@ export interface APIConfiguration {
      * Options for API validation and configuration
      */
     apiOptions?: APIOptions;
+
+    /**
+     * OPenAPI Specification configuration
+     */
+    openAPISpecification?: OpenAPISpecification;
 }
 
 export interface TotoAPIEndpoint {
