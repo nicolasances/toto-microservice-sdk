@@ -10,6 +10,7 @@ This is the NodeJS SDK documentation.
 3. [Usage](#3-usage)
    - [3.1. The Toto Microservice Configuration](#31-the-toto-microservice-configuration)
    - [3.2. Create and Register APIs](#32-create-and-register-apis)
+        * [Exposing the OpenAPI Spec through Swagger UI](#exposing-the-openapi-spec-through-swagger-ui)
    - [3.3. Use a Message Bus](#33-use-a-message-bus)
    - [3.4. Load Secrets](#34-load-secrets)
    - [3.5. Custom Configurations](#35-custom-configurations)
@@ -166,6 +167,18 @@ const config: TotoMicroserviceConfiguration = {
     }, 
 };
 ```
+
+#### Exposing the OpenAPI Spec through Swagger UI
+**If you have** an OpenAPI Spec defined for your microservice, you can expose it through Swagger UI. <br>
+To do that, you need to add the following to your `TotoMicroserviceConfiguration`, in the `apiConfiguration` section: 
+
+```typescript
+    apiConfiguration: {
+        ...
+        openAPISpecification: { localSpecsFilePath: './openapi.yaml' }
+    },
+```
+
 
 ---
 
