@@ -179,6 +179,7 @@ To do that, you need to add the following to your `TotoMicroserviceConfiguration
     },
 ```
 
+After this the API Documentation will be available at: `http(s)://<your-microservice-host>:<port>/<base-path>/apidocs` <br>
 
 ---
 
