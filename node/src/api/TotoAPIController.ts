@@ -18,6 +18,7 @@ import { TotoRegistryAPI } from '../integration/TotoRegistryAPI';
 import { RegistryCache } from '../integration/RegistryCache';
 import { TotoEnvironment } from '..';
 import { OpenAPISpecification } from '../model/APIConfiguration';
+import { OpenAPIDocsJSONDelegate } from '../dlg/OpenAPIDocsJSONDelegate';
 
 export class TotoControllerOptions {
     debugMode?: boolean = false
@@ -92,11 +93,12 @@ export class TotoAPIController {
         // Create an OpenAPI docs endpoint if the spec is available
         if (options?.openAPISpecification?.localSpecsFilePath) {
             
-            const correctedPath = this.options.basePath ? this.options.basePath.replace(/\/$/, '').trim() + '/apidocs' : '/apidocs';
+            const apiDocsCorrectedPath = this.options.basePath ? this.options.basePath.replace(/\/$/, '').trim() + '/apidocs' : '/apidocs';
             
             const swaggerDocument = yaml.load( fs.readFileSync(options.openAPISpecification.localSpecsFilePath, 'utf8') ) as swaggerUi.JsonObject;
 
-            this.app.use(correctedPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+            this.app.use(apiDocsCorrectedPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+            this.path('GET', `/jsondocs`, new OpenAPIDocsJSONDelegate(null as any, this.props.config, swaggerDocument), { noAuth: true, contentType: 'application/json' });
         }
 
         // Bindings
