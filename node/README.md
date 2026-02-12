@@ -12,8 +12,9 @@ This is the NodeJS SDK documentation.
    - [3.2. Create and Register APIs](#32-create-and-register-apis)
         * [Exposing the OpenAPI Spec through Swagger UI](#exposing-the-openapi-spec-through-swagger-ui)
    - [3.3. Use a Message Bus](#33-use-a-message-bus)
-   - [3.4. Load Secrets](#34-load-secrets)
-   - [3.5. Custom Configurations](#35-custom-configurations)
+   - [3.4. Expose MCP Tools](#34-expose-mcp-tools)
+   - [3.5. Load Secrets](#35-load-secrets)
+   - [3.6. Custom Configurations](#36-custom-configurations)
 
 Other: 
 * [Build and Deploy on NPM](./docs/buildpublish.md)
@@ -124,30 +125,54 @@ Endpoints are defined when creating the API controller and are automatically set
 #### Create a Toto Delegate
 
 Every endpoint needs to be managed by a **Toto Delegate**. <br>
-Toto Delegates implement the `TotoDelegate` interface.
+Toto Delegates extend the `TotoDelegate` abstract class.
 
 This is how you define a Toto Delegate. <br>
 *The following example shows a delegate that processes user creation*.
 
 ```typescript
-import { TotoDelegate, UserContext } from 'totoms';
+import { TotoDelegate, UserContext, ValidationError, TotoRequest } from 'totoms';
 import { Request } from 'express';
 
-class CreateUserDelegate extends TotoDelegate {
+class CreateUserDelegate extends TotoDelegate<CreateUserRequest, CreateUserResponse> {
 
-    async do(req: Request, userContext?: UserContext): Promise<any> {
+    async do(req: CreateUserRequest, userContext: UserContext): Promise<CreateUserResponse> {
 
-        // Extract data from the request
-        const { name, email } = req.body;
+        // Extract data from the request (already validated)
+        const { name, email } = req;
         
         // Your business logic here
         ...
         
-        // Return the response (anything you'd like)
+        // Return the response
         return { 
-            ..., 
+            id: newUserId,
+            name: name,
+            email: email
         };
     }
+    
+    public parseRequest(req: Request): CreateUserRequest {
+        // Validate and parse the incoming Express request
+        if (!req.body.name) throw new ValidationError(400, "Name is required");
+        if (!req.body.email) throw new ValidationError(400, "Email is required");
+        
+        return {
+            name: req.body.name,
+            email: req.body.email
+        };
+    }
+}
+
+interface CreateUserRequest extends TotoRequest {
+    name: string;
+    email: string;
+}
+
+interface CreateUserResponse {
+    id: string;
+    name: string;
+    email: string;
 }
 ```
 
@@ -314,7 +339,99 @@ There are different ways to get access to the Message Bus instance:
 
 ---
 
-### 3.4. Load Secrets
+### 3.4. Expose MCP Tools
+
+The SDK now supports exposing delegates as **Model Context Protocol (MCP) Tools**. This allows your microservice to be consumed by AI agents and other MCP-compatible clients.
+
+#### Creating an MCP-Enabled Delegate
+
+To expose a delegate as an MCP tool, extend `TotoMCPDelegate` instead of `TotoDelegate` and implement the `getToolDefinition()` method:
+
+```typescript
+import { TotoMCPDelegate, UserContext, TotoRequest } from 'totoms';
+import { TotoMCPToolDefinition } from 'totoms';
+import { Request } from 'express';
+import z from 'zod';
+
+export class GetTopics extends TotoMCPDelegate<GetTopicsRequest, GetTopicsResponse> {
+
+    public getToolDefinition(): TotoMCPToolDefinition {
+        return {
+            name: "getTopics",
+            title: "Get user's topics in Tome",
+            description: "Retrieves all topics associated with the authenticated user.",
+            inputSchema: z.object({}) // Define the input schema using Zod
+        }
+    }
+
+    async do(req: GetTopicsRequest, userContext: UserContext): Promise<GetTopicsResponse> {
+        const user = userContext.email;
+        
+        // Your business logic here
+        const topics = await this.fetchTopicsForUser(user);
+        
+        return { topics };
+    }
+
+    public parseRequest(req: Request): GetTopicsRequest {
+        // Parse Express request (for REST API usage)
+        return {};
+    }
+    
+    private async fetchTopicsForUser(user: string) {
+        // Implementation
+        ...
+    }
+}
+
+interface GetTopicsRequest extends TotoRequest {}
+
+interface GetTopicsResponse {
+    topics: any[];
+}
+```
+
+#### Registering MCP Tools
+
+Register your MCP-enabled delegates in the `mcpConfiguration` section of your microservice configuration:
+
+```typescript
+import { TotoMicroservice, TotoMicroserviceConfiguration } from 'totoms';
+import { GetTopics } from './dlg/GetTopics';
+import { GetTopic } from './dlg/GetTopic';
+
+const config: TotoMicroserviceConfiguration = {
+    serviceName: "tome-ms-topics",
+    basePath: '/tometopics',
+    environment: ...,
+    apiConfiguration: {
+        apiEndpoints: [
+            { method: 'GET', path: '/topics', delegate: GetTopics }
+        ]
+    },
+    mcpConfiguration: {
+        enableMCP: true,
+        serverConfiguration: {
+            name: "Tome Topics MCP Server",
+            tools: [
+                GetTopics,
+                GetTopic
+            ]
+        }
+    }
+};
+```
+
+#### Key Points
+
+* **Dual Purpose**: Delegates extending `TotoMCPDelegate` can serve both as REST API endpoints AND as MCP tools
+* **Tool Definition**: The `getToolDefinition()` method defines how the tool appears to MCP clients
+* **Input Schema**: Use Zod schemas to define and validate tool inputs
+* **Custom Processing**: Override `processToolRequest()` if you need custom logic for MCP tool invocations that differs from REST API handling
+
+---
+
+### 3.5. Load Secrets
 
 The SDK handles secret loading from your cloud provider automatically. Access secrets through the configuration or use the `SecretsManager` directly:
 
@@ -332,7 +449,7 @@ Secrets are typically stored as environment variable names or secret manager ref
 
 ---
 
-### 3.5. Custom Configurations
+### 3.6. Custom Configurations
 
 You can define your own custom configurations by extending the `TotoControllerConfig` base class.
 
