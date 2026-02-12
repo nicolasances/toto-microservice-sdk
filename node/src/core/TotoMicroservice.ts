@@ -1,18 +1,21 @@
-import { TopicIdentifier, TotoMessageBus, TotoMessageHandler, TotoControllerConfig, TotoAPIController, SecretsManager, Logger, APIConfiguration, TotoEnvironment, GCPConfiguration, AzureConfiguration, AWSConfiguration, SupportedHyperscalers } from '..';
+import { TopicIdentifier, TotoMessageBus, TotoMessageHandler, TotoControllerConfig, TotoAPIController, SecretsManager, Logger, APIConfiguration, TotoEnvironment, GCPConfiguration, AzureConfiguration, AWSConfiguration, SupportedHyperscalers, MCPConfiguration } from '..';
+import { MCPServer } from '../mcp/MCPServer';
 
 export class TotoMicroservice {
 
     private config: TotoControllerConfig;
     private apiController: TotoAPIController;
+    private mcpServer?: MCPServer;
     private messageBus: TotoMessageBus;
 
     private static instance: TotoMicroservice;
     private static instancePromise: Promise<TotoMicroservice> | null = null;
 
-    private constructor(config: TotoControllerConfig, apiController: TotoAPIController, messageBus: TotoMessageBus) {
+    private constructor(config: TotoControllerConfig, apiController: TotoAPIController, messageBus: TotoMessageBus, mcpServer?: MCPServer) {
         this.config = config;
         this.apiController = apiController;
         this.messageBus = messageBus;
+        this.mcpServer = mcpServer;
     }
 
     public static async init(config: TotoMicroserviceConfiguration): Promise<TotoMicroservice> {
@@ -45,7 +48,7 @@ export class TotoMicroservice {
         TotoMicroservice.instancePromise = customConfig.load().then(() => {
 
             // Create the API controller
-            const apiController = new TotoAPIController({ apiName: config.serviceName, config: customConfig, environment: config.environment }, { basePath: config.basePath, openAPISpecification: config.apiConfiguration.openAPISpecification });
+            const apiController = new TotoAPIController({ apiName: config.serviceName, config: customConfig, environment: config.environment }, { basePath: config.basePath, openAPISpecification: config.apiConfiguration.openAPISpecification, port: config.port });
 
             // Create the message bus
             const bus = new TotoMessageBus({
@@ -75,7 +78,15 @@ export class TotoMicroservice {
                 }
             }
 
-            return new TotoMicroservice(customConfig, apiController, bus);
+            // Create the MCP Server if enabled
+            let mcpServer: MCPServer | undefined = undefined;
+            if (config.mcpConfiguration?.enableMCP) {
+
+                mcpServer = new MCPServer(apiController, config.mcpConfiguration.serverConfiguration, customConfig, {basePath: config.basePath} );
+
+            }
+
+            return new TotoMicroservice(customConfig, apiController, bus, mcpServer);
         });
 
         return TotoMicroservice.instancePromise;
@@ -90,10 +101,12 @@ export class TotoMicroservice {
 export interface TotoMicroserviceConfiguration {
     serviceName: string;
     basePath?: string;
+    port?: number;
     environment: TotoEnvironment;
     customConfiguration: new (secretsManager: SecretsManager) => TotoControllerConfig;
     apiConfiguration: APIConfiguration;
     messageBusConfiguration?: MessageBusConfiguration;
+    mcpConfiguration?: MCPConfiguration;
 }
 
 export interface MessageBusConfiguration {
