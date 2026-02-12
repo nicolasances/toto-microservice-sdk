@@ -16,7 +16,7 @@ To do that, you need to get a new Token from your NPM account settings:
 
 It is very important, if you want to publish from a laptop, to **Bypass two-factor authentication (2FA)** for this token. 
 
-![Bypassing 2FA](bypass.png)
+![Bypassing 2FA](bypass2fa.png)
 
 In permissions, add *Read and Write* to selected packages.
 
