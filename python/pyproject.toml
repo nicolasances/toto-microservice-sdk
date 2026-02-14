@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "totoms"
-version = "1.0.2"
+version = "1.2.0"
 description = "Toto Microservice SDK - Python framework for building microservices"
 readme = "README.md"
 requires-python = ">=3.8"

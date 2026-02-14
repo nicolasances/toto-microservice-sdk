@@ -5,6 +5,7 @@ export { Logger } from './logger/TotoLogger'
 export { AUTH_PROVIDERS } from './model/AuthProviders'
 export { TotoControllerConfig } from './model/TotoControllerConfig'
 export { FakeRequest, TotoDelegate } from './model/TotoDelegate'
+export { TotoRequest } from './model/TotoRequest'
 export { TotoPathOptions } from './model/TotoPathOptions'
 export { TotoRuntimeError } from './model/TotoRuntimeError'
 export { UserContext } from './model/UserContext'
@@ -21,4 +22,9 @@ export { TotoMicroservice, TotoMicroserviceConfiguration, getHyperscalerConfigur
 export { TotoEnvironment, SupportedHyperscalers, AWSConfiguration, AzureConfiguration, GCPConfiguration } from './model/TotoEnvironment'
 export { TotoMessageBus, MessageHandlerRegistrationOptions, TopicIdentifier, TotoMessageBusConfiguration } from './evt/MessageBus';
 export { IPubSub, IMessageBus, IQueue, APubSubRequestFilter, APubSubRequestValidator, MessageDestination } from './evt/IMessageBus';
+export { MCPConfiguration } from './mcp/MCPConfiguration'
+export { MCPServer } from './mcp/MCPServer'
+export { ToolResponse } from './mcp/ToolResponse'
+export { TotoMCPDelegate } from './mcp/TotoMCPDelegate'
+export { TotoMCPToolDefinition } from './mcp/TotoMCPToolDefinition'
 export { TotoMessageHandler, ProcessingResponse } from './evt/TotoMessageHandler';

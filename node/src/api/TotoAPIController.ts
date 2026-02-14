@@ -3,6 +3,8 @@ import busboy from 'connect-busboy'
 import fs from 'fs-extra';
 import express, { Express, Request, Response } from 'express'
 import { v4 as uuidv4 } from 'uuid';
+import swaggerUi from 'swagger-ui-express';
+import yaml from 'js-yaml';
 
 import { Logger } from '../logger/TotoLogger'
 import { TotoControllerConfig } from '../model/TotoControllerConfig'
@@ -15,11 +17,14 @@ import path from 'path';
 import { TotoRegistryAPI } from '../integration/TotoRegistryAPI';
 import { RegistryCache } from '../integration/RegistryCache';
 import { TotoEnvironment } from '..';
+import { OpenAPISpecification } from '../model/APIConfiguration';
+import { OpenAPIDocsJSONDelegate } from '../dlg/OpenAPIDocsJSONDelegate';
 
 export class TotoControllerOptions {
     debugMode?: boolean = false
     basePath?: string = undefined   // Use to prepend a base path to all API paths, e.g. '/api/v1' or '/expenses/v1'
     port?: number                   // Use to define the port on which the Express app will listen. Default is 8080
+    openAPISpecification?: OpenAPISpecification = undefined
 }
 
 export interface TotoControllerProps {
@@ -85,6 +90,17 @@ export class TotoAPIController {
         this.path('GET', '/', smokeEndpoint, { noAuth: true, contentType: 'application/json', ignoreBasePath: true });
         this.path('GET', '/health', smokeEndpoint, { noAuth: true, contentType: 'application/json', ignoreBasePath: true });
 
+        // Create an OpenAPI docs endpoint if the spec is available
+        if (options?.openAPISpecification?.localSpecsFilePath) {
+            
+            const apiDocsCorrectedPath = this.options.basePath ? this.options.basePath.replace(/\/$/, '').trim() + '/apidocs' : '/apidocs';
+            
+            const swaggerDocument = yaml.load( fs.readFileSync(options.openAPISpecification.localSpecsFilePath, 'utf8') ) as swaggerUi.JsonObject;
+
+            this.app.use(apiDocsCorrectedPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+            this.path('GET', `/jsondocs`, new OpenAPIDocsJSONDelegate(null as any, this.props.config, swaggerDocument), { noAuth: true, contentType: 'application/json' });
+        }
+
         // Bindings
         this.staticContent = this.staticContent.bind(this);
         this.fileUploadPath = this.fileUploadPath.bind(this);
@@ -124,7 +140,7 @@ export class TotoAPIController {
      * @param {object} options options to configure this path: 
      *  - contentType: (OPT, default null) provide the Content-Type header to the response
      */
-    streamGET(path: string, delegate: TotoDelegate, options?: TotoPathOptions) {
+    streamGET(path: string, delegate: TotoDelegate<any, any>, options?: TotoPathOptions) {
 
         // If a basepath is defined, prepend it to the path
         // Make sure that the basePath does not end with "/". If it does remove it. 
@@ -139,8 +155,10 @@ export class TotoAPIController {
 
                 logger.apiIn(req.headers['x-correlation-id'], 'GET', correctedPath);
 
+                const totoRequest =  delegate.parseRequest(req);
+
                 // Execute the GET
-                delegate.processRequest(req, userContext).then((stream) => {
+                delegate.processRequest(totoRequest, userContext).then((stream) => {
 
                     // Add any additional configured headers
                     if (options && options.contentType) res.header('Content-Type', options.contentType);
@@ -172,7 +190,7 @@ export class TotoAPIController {
      * Adds a path that support uploading files
      *  - path:     the path as expected by express. E.g. '/upload'
      */
-    fileUploadPath(path: string, delegate: TotoDelegate, options?: TotoPathOptions) {
+    fileUploadPath(path: string, delegate: TotoDelegate<any, any>, options?: TotoPathOptions) {
 
         // If a basepath is defined, prepend it to the path
         // Make sure that the basePath does not end with "/". If it does remove it. 
@@ -223,12 +241,14 @@ export class TotoAPIController {
 
             req.busboy.on("finish", () => {
 
-                delegate.processRequest({
+                const totoRequest = delegate.parseRequest({
                     query: req.query,
                     params: req.params,
                     headers: req.headers,
                     body: { filepath: filepath, filename: filename, ...additionalData }
-                }, userContext).then((data) => {
+                } as Request);
+
+                delegate.processRequest(totoRequest, userContext).then((data) => {
                     // Success
                     res.status(200).type('application/json').send(data);
 
@@ -245,7 +265,7 @@ export class TotoAPIController {
         });
 
         // Log the added path
-        logger.compute("INIT", '[' + this.apiName + '] - Successfully added method ' + 'POST' + ' ' + correctedPath);
+        logger.compute("INIT", 'Successfully added method ' + 'POST' + ' ' + correctedPath);
     }
 
     /**
@@ -312,7 +332,7 @@ export class TotoAPIController {
      *  - delegate: the delegate that exposes a do() function. Note that the delegate will always receive the entire req object
      *  - options:  optional options to path
      */
-    path(method: string, path: string, delegate: TotoDelegate, options?: TotoPathOptions) {
+    path(method: string, path: string, delegate: TotoDelegate<any, any>, options?: TotoPathOptions) {
 
         // If a basepath is defined, prepend it to the path
         // Make sure that the basePath does not end with "/". If it does remove it. 
@@ -325,6 +345,8 @@ export class TotoAPIController {
 
             const cid = String(req.headers['x-correlation-id']);
 
+            delegate.setCorrelationId(cid);
+
             try {
 
                 // Log the fact that a call has been received
@@ -333,8 +355,11 @@ export class TotoAPIController {
                 // Validating
                 const userContext = await validator.validate(req, options);
 
+                // Conver the request into the format expected by the delegate 
+                const totoRequest =  delegate.parseRequest(req);
+
                 // Execute the GET
-                const data = await delegate.processRequest(req, userContext);
+                const data = await delegate.processRequest(totoRequest, userContext);
 
                 let contentType = 'application/json'
                 let dataToReturn = data;
@@ -381,7 +406,7 @@ export class TotoAPIController {
         }
 
         this.app.listen(this.options.port, () => {
-            logger.compute("INIT", `[${this.apiName}] - Microservice listening on port ${this.options.port}`, 'info');
+            logger.compute("INIT", `Microservice listening on port ${this.options.port}`, 'info');
         });
 
     }

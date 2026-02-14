@@ -13,6 +13,7 @@ This is the Python SDK documentation.
    - [3.2. Use a Message Bus](#32-use-a-message-bus)
    - [3.3. Load Secrets](#33-load-secrets)
    - [3.4. Custom Configurations](#34-custom-configurations)
+   - [3.5. Using Cloud Storage](#35-using-cloud-storage)
 
 Other: 
 * [Build and Publish guide](./docs/buildpublish.md)
@@ -279,3 +280,95 @@ What you can do with a Custom Configuration:
 
 1. **Load Secrets** <br>
 You can do that by overriding the `load()` async method and using `self.secrets_manager.get_secret, "your-secret-name")` to load secrets.
+
+---
+### 3.5. Using Cloud Storage
+
+The SDK provides a cloud-agnostic storage abstraction through the `CloudStorage` interface. <br>
+This allows you to interact with cloud storage (AWS S3, Google Cloud Storage, Azure Blob Storage) without worrying about provider-specific APIs.
+
+#### Getting a CloudStorage Instance
+
+The easiest way to get a `CloudStorage` instance is through the `ExecutionContext` in your delegates:
+
+```python
+from fastapi import Request
+from totoms import toto_delegate, ExecutionContext, UserContext, ValidationError
+
+@toto_delegate
+async def handle_file_upload(request: Request, user_context: UserContext, exec_context: ExecutionContext):
+    
+    bucket_name = request.query_params.get("bucket")
+    
+    if not bucket_name:
+        raise ValidationError("Missing 'bucket' query parameter.")
+    
+    # Get a CloudStorage instance for the specified bucket
+    storage = exec_context.get_storage(bucket_name)
+    
+    # Now you can use the storage instance
+    # ... (see examples below)
+```
+
+The `get_storage()` method automatically creates the appropriate storage implementation based on your configured cloud provider (hyperscaler).
+
+#### Uploading Files
+
+```python
+# Create a local file
+local_file_path = './hello.txt'
+
+with open(local_file_path, 'w') as f:
+    f.write('Hello, Toto!')
+
+# Upload to cloud storage
+destination_path = 'my-folder/hello.txt'
+storage.upload_file(local_file_path, destination_path)
+
+exec_context.logger.log(exec_context.cid, f"Uploaded file to {destination_path}")
+```
+
+#### Downloading Files
+
+```python
+# Download a file from cloud storage
+source_path = 'my-folder/hello.txt'
+local_destination = './downloaded_hello.txt'
+
+storage.download_file(source_path, local_destination)
+
+exec_context.logger.log(exec_context.cid, f"Downloaded file to {local_destination}")
+```
+
+#### Listing Files
+
+```python
+# List all files with a specific prefix
+files = storage.list_files('my-folder/')
+
+exec_context.logger.log(exec_context.cid, f"Files in bucket: {files}")
+
+for file_path in files:
+    exec_context.logger.log(exec_context.cid, f"  - {file_path}")
+```
+
+#### Getting File Content
+
+```python
+# Read file content directly without downloading
+file_path = 'my-folder/hello.txt'
+content = storage.get_file_content(file_path)
+
+exec_context.logger.log(exec_context.cid, f"File content: {content}")
+```
+
+#### Deleting Files
+
+```python
+# Delete a file from cloud storage
+file_path = 'my-folder/hello.txt'
+storage.delete_file(file_path)
+
+exec_context.logger.log(exec_context.cid, f"Deleted file: {file_path}")
+```
+
