@@ -58,7 +58,7 @@ export class TotoMicroservice {
             // Register the message handlers
             if (config.messageBusConfiguration && config.messageBusConfiguration.messageHandlers) {
                 for (const handler of config.messageBusConfiguration.messageHandlers) {
-                    bus.registerMessageHandler(new handler(customConfig));
+                    bus.registerMessageHandler(new handler(customConfig, bus));
                 }
             }
 
@@ -98,7 +98,7 @@ export interface TotoMicroserviceConfiguration {
 
 export interface MessageBusConfiguration {
     topics: { logicalName: string; secret: string }[];
-    messageHandlers?: (new (config: TotoControllerConfig) => TotoMessageHandler)[];
+    messageHandlers?: (new (config: TotoControllerConfig, messageBus: TotoMessageBus) => TotoMessageHandler)[];
 }
 
 export function getHyperscalerConfiguration(): GCPConfiguration | AWSConfiguration | AzureConfiguration {

@@ -1,4 +1,5 @@
 import { TotoControllerConfig } from "../model/TotoControllerConfig";
+import { TotoMessageBus } from "./MessageBus";
 import { TotoMessage } from "./TotoMessage";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -9,8 +10,11 @@ import { v4 as uuidv4 } from 'uuid';
 export abstract class TotoMessageHandler {
 
     cid?: string;
+    messageBus: TotoMessageBus;
 
-    constructor(protected config: TotoControllerConfig) { }
+    constructor(protected config: TotoControllerConfig, messageBus: TotoMessageBus) {
+        this.messageBus = messageBus;
+    }
 
     /**
      * Wrapper of the onMessage() method that provides specific pre-processing if needed.
