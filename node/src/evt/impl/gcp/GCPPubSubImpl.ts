@@ -47,7 +47,9 @@ export class GCPPubSubImpl extends IPubSub {
 
         try {
 
-            await topic.topic.publishMessage({ data: Buffer.from(message as any) as any });
+            // await topic.topic.publishMessage({ data: Buffer.from(message as any) as any });
+
+            await topic.topic.publishMessage({ json: message as any as Record<string, unknown> });
 
             logger.eventOut(message.cid, "Successfully published the event [ " + message.type + " ]", "info");
 
