@@ -28,3 +28,4 @@ export { ToolResponse } from './mcp/ToolResponse'
 export { TotoMCPDelegate } from './mcp/TotoMCPDelegate'
 export { TotoMCPToolDefinition } from './mcp/TotoMCPToolDefinition'
 export { TotoMessageHandler, ProcessingResponse } from './evt/TotoMessageHandler';
+export { DevQImpl } from './evt/impl/other/DevQImpl';
