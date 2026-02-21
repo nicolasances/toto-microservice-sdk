@@ -1,4 +1,5 @@
 import { TotoControllerConfig, TotoDelegate, TotoMessageBus } from "..";
+import { TotoPathOptions } from "./TotoPathOptions";
 
 export interface OpenAPISpecification {
     localSpecsFilePath?: string; // Path to a local OpenAPI specification file - example: './openapi.yaml'
@@ -10,6 +11,11 @@ export interface APIConfiguration {
      * The list of API endpoints to be registered
      */
     apiEndpoints: TotoAPIEndpoint[];
+
+    /**
+     * The list of streaming API endpoints to be registered (e.g. SSE)
+     */
+    streamEndpoints?: TotoAPIStreamEndpoint[];
 
     /**
      * Options for API validation and configuration
@@ -26,6 +32,14 @@ export interface TotoAPIEndpoint {
     method: 'GET' | 'POST' | 'PUT' | 'DELETE';
     path: string;
     delegate: new (messageBus: TotoMessageBus, config: TotoControllerConfig) => TotoDelegate<any, any>;
+    options?: TotoPathOptions;
+}
+
+export interface TotoAPIStreamEndpoint {
+    method: 'GET';
+    path: string;
+    delegate: new (messageBus: TotoMessageBus, config: TotoControllerConfig) => TotoDelegate<any, any>;
+    options?: TotoPathOptions;
 }
 
 export interface APIOptions {

@@ -153,6 +153,9 @@ export class TotoAPIController {
 
             validator.validate(req, options).then((userContext) => {
 
+                const cid = String(req.headers['x-correlation-id']);
+                delegate.setCorrelationId(cid);
+
                 logger.apiIn(req.headers['x-correlation-id'], 'GET', correctedPath);
 
                 const totoRequest =  delegate.parseRequest(req);
@@ -162,9 +165,15 @@ export class TotoAPIController {
 
                     // Add any additional configured headers
                     if (options && options.contentType) res.header('Content-Type', options.contentType);
+                    if (options && options.headers) {
+                        for (const [key, value] of Object.entries(options.headers)) {
+                            res.header(key, value);
+                        }
+                    }
 
                     // stream must be a stream: e.g. var stream = bucket.file('Toast.jpg').createReadStream();
                     res.writeHead(200);
+                    if (typeof (res as any).flushHeaders === 'function') (res as any).flushHeaders();
 
                     stream.on('data', (data: any) => {
                         res.write(data);

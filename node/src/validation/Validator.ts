@@ -93,7 +93,7 @@ export class Validator {
     if (this.props.noAuth == null || this.props.noAuth == false) {
 
       // Check if Path Options allow for this route to be auth free
-      if (!options || options.noAuth == false) {
+      if (!options || options.noAuth !== true) {
 
         if (!authorizationHeader) throw new ValidationError(401, "No Authorization Header provided")
 

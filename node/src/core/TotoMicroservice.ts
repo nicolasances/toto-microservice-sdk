@@ -1,4 +1,4 @@
-import { TopicIdentifier, TotoMessageBus, TotoMessageHandler, TotoControllerConfig, TotoAPIController, SecretsManager, Logger, APIConfiguration, TotoEnvironment, GCPConfiguration, AzureConfiguration, AWSConfiguration, SupportedHyperscalers, MCPConfiguration } from '..';
+import { TopicIdentifier, TotoMessageBus, TotoMessageHandler, TotoControllerConfig, TotoAPIController, SecretsManager, Logger, APIConfiguration, TotoEnvironment, GCPConfiguration, AzureConfiguration, AWSConfiguration, SupportedHyperscalers, MCPConfiguration, IMessageBus } from '..';
 import { MCPServer } from '../mcp/MCPServer';
 
 export class TotoMicroservice {
@@ -55,7 +55,8 @@ export class TotoMicroservice {
                 controller: apiController,
                 customConfig: customConfig,
                 topics: topicNames,
-                environment: config.environment
+                environment: config.environment,
+                messageBusOverride: config.messageBusConfiguration?.messageBusOverride
             });
 
             // Register the message handlers
@@ -74,7 +75,20 @@ export class TotoMicroservice {
                     const delegateInstance = new endpoint.delegate(bus, customConfig);
 
                     // Add the endpoint to the controller
-                    apiController.path(endpoint.method, endpoint.path, delegateInstance);
+                    apiController.path(endpoint.method, endpoint.path, delegateInstance, endpoint.options);
+                }
+            }
+
+            // Register the streaming API endpoints
+            if (config.apiConfiguration && config.apiConfiguration.streamEndpoints) {
+
+                for (const endpoint of config.apiConfiguration.streamEndpoints) {
+
+                    // Create an instance of the delegate
+                    const delegateInstance = new endpoint.delegate(bus, customConfig);
+
+                    // Add the endpoint to the controller
+                    apiController.streamGET(endpoint.path, delegateInstance, endpoint.options);
                 }
             }
 
@@ -112,6 +126,7 @@ export interface TotoMicroserviceConfiguration {
 export interface MessageBusConfiguration {
     topics: { logicalName: string; secret: string }[];
     messageHandlers?: (new (config: TotoControllerConfig, messageBus: TotoMessageBus) => TotoMessageHandler)[];
+    messageBusOverride?: IMessageBus;
 }
 
 export function getHyperscalerConfiguration(): GCPConfiguration | AWSConfiguration | AzureConfiguration {
