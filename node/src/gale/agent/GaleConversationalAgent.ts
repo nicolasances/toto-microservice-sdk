@@ -4,7 +4,7 @@ import { GaleAgent } from "./GaleAgent";
 import { UserContext } from "../../model/UserContext";
 import { ValidationError } from "../../validation/Validator";
 import { GaleBrokerAPI } from "../integration/GaleBrokerAPI";
-import { Logger } from "src";
+import { Logger } from "../../logger/TotoLogger";
 
 export abstract class GaleConversationalAgent extends GaleAgent<AgentConversationMessage, AgentConversationMessage> {
 
