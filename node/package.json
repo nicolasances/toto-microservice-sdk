@@ -1,6 +1,6 @@
 {
   "name": "totoms",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Toto Microservice SDK for NodeJS - A fast, cloud-agnostic, opinionated framework for building microservices in the Toto Ecosystem",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
