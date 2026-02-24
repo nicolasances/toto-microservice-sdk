@@ -587,6 +587,20 @@ To integrate with Gale Broker the following environment variables **must** be se
 
 The SDK will throw an error at startup if either variable is not set when any agent is configured.
 
+#### GCP — Required IAM Roles
+
+If your agent uses **Vertex AI** (e.g. via `@genkit-ai/google-genai`), the service account running the microservice must have the following IAM role granted in your Terraform configuration:
+
+```hcl
+resource "google_project_iam_member" "my-service_role_aiplatform" {
+    project = var.gcp_pid
+    role    = "roles/aiplatform.user"
+    member  = format("serviceAccount:%s", google_service_account.my-service-account.email)
+}
+```
+
+Without this role the Vertex AI API calls will fail with a `403 Permission Denied` error.
+
 ---
 
 ## Core Components
