@@ -578,13 +578,14 @@ Multiple agents can be registered in the `agents` array.
 
 #### Required Environment Variables
 
-To integrate with Gale Broker the following environment variable **must** be set:
+To integrate with Gale Broker the following environment variables **must** be set:
 
 | Variable | Description |
 |---|---|
 | `GALE_BROKER_URL` | The base URL of the Gale Broker service (e.g. `http://gale-broker:8080/galebroker`). Used to register the agent on startup and to publish messages back to conversations. |
+| `SERVICE_BASE_URL` | The publicly reachable base URL of **this** microservice, including the base path if any (e.g. `https://myservice.example.com/basepath`). Gale Broker uses this to know where to forward incoming conversation messages for the agent. |
 
-The SDK will throw an error at startup if `GALE_BROKER_URL` is not set when any agent is configured.
+The SDK will throw an error at startup if either variable is not set when any agent is configured.
 
 ---
 
