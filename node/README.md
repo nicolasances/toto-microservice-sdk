@@ -15,6 +15,7 @@ This is the NodeJS SDK documentation.
    - [3.4. Expose MCP Tools](#34-expose-mcp-tools)
    - [3.5. Load Secrets](#35-load-secrets)
    - [3.6. Custom Configurations](#36-custom-configurations)
+   - [3.7. Publish an Agent](#37-publish-an-agent)
 
 Other: 
 * [Build and Deploy on NPM](./docs/buildpublish.md)
@@ -484,6 +485,108 @@ Override `getMongoSecretNames()`, `getDBName()`, and `getCollections()` to confi
 
 3. **Custom Authentication** <br>
 Override `getCustomAuthVerifier()` to provide custom authentication logic.
+
+---
+
+### 3.7. Publish an Agent
+
+The SDK supports publishing **Gale Agents** — AI agents that can participate in conversations brokered by [Gale Broker](https://github.com/nicolasances/gale-broker). <br>
+An agent receives a user message, processes it (potentially using an LLM), and returns a response. It can also publish intermediate messages back to the conversation in real time while processing.
+
+#### Create a Conversational Agent
+
+Extend `GaleConversationalAgent` and implement two required methods:
+
+* `getManifest()` — returns the agent's identity information
+* `onMessage()` — handles an incoming conversation message and returns the response
+
+```typescript
+import { AgentConversationMessage, GaleConversationalAgent, AgentManifest } from "totoms";
+import { v4 as uuid } from "uuid";
+
+export class MyAgent extends GaleConversationalAgent {
+
+    getManifest(): AgentManifest {
+        return {
+            agentType: "conversational",
+            agentId: "my-agent",                    // Unique agent identifier
+            humanFriendlyName: "My Agent",          // Display name shown to users
+        }
+    }
+
+    async onMessage(message: AgentConversationMessage): Promise<AgentConversationMessage> {
+
+        const streamId = uuid();
+
+        // Optionally publish an intermediate message to the conversation
+        // while you are still processing, to give the user early feedback.
+        this.publishMessage({
+            conversationId: message.conversationId,
+            messageId: uuid(),
+            agentId: message.agentId,
+            message: "Got your message, working on it!",
+            actor: "agent",
+            stream: { streamId, sequenceNumber: 1, last: false }
+        });
+
+        // ... run your LLM / business logic here ...
+        const result = "Here is my answer!";
+
+        // Return the final response
+        return {
+            conversationId: message.conversationId,
+            messageId: message.messageId,
+            agentId: message.agentId,
+            message: result,
+            actor: "agent",
+            stream: { streamId, sequenceNumber: 2, last: true }
+        };
+    }
+}
+```
+
+Key points:
+* `publishMessage()` lets the agent stream intermediate messages to the client **while still processing**. This is useful to acknowledge receipt or provide progress updates before the final answer is ready.
+* The `stream` field is optional but recommended for conversational agents. Set `last: true` only on the final message.
+* `actor` should always be `"agent"` for messages sent by the agent.
+
+#### Register the Agent
+
+Add an `agentsConfiguration` block to your `TotoMicroserviceConfiguration`:
+
+```typescript
+import { TotoMicroservice, TotoMicroserviceConfiguration } from "totoms";
+import { MyAgent } from "./agent/MyAgent";
+
+const config: TotoMicroserviceConfiguration = {
+    serviceName: "my-microservice",
+    environment: { ... },
+    ...
+    agentsConfiguration: {
+        agents: [
+            MyAgent
+        ]
+    }
+};
+
+TotoMicroservice.init(config).then(microservice => {
+    microservice.start();
+});
+```
+
+Multiple agents can be registered in the `agents` array.
+
+#### Required Environment Variables
+
+To integrate with Gale Broker the following environment variable **must** be set:
+
+| Variable | Description |
+|---|---|
+| `GALE_BROKER_URL` | The base URL of the Gale Broker service (e.g. `http://gale-broker:8080/galebroker`). Used to register the agent on startup and to publish messages back to conversations. |
+
+The SDK will throw an error at startup if `GALE_BROKER_URL` is not set when any agent is configured.
+
+---
 
 ## Core Components
 
