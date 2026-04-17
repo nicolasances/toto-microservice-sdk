@@ -235,17 +235,21 @@ class TotoMicroservice:
                 agent = agent_class(message_bus, custom_config)
                 manifest = agent.get_manifest()
 
-                agent_endpoint = AgentEndpoint.from_agent_manifest(manifest)
+                # Always register the FastAPI endpoint — path is derived directly from the manifest
+                # without requiring SERVICE_BASE_URL, so the route is available even in local dev.
+                messages_path = f"/agents/{manifest.agent_id}/messages"
 
-                # Register the POST endpoint for the agent
                 api_controller.path(TotoAPIEndpoint(
                     method="POST",
-                    path=agent_endpoint.messages_path,
+                    path=messages_path,
                     delegate=agent.on_request,
                 ))
 
-                # Register the agent with the Gale Broker
+                # Register the agent with the Gale Broker (needs SERVICE_BASE_URL + GALE_BROKER_URL)
+                # This is best-effort: if it fails the service still handles requests.
                 try:
+                    agent_endpoint = AgentEndpoint.from_agent_manifest(manifest)
+
                     logger.log("INIT", f"Registering agent [{manifest.human_friendly_name}] with Gale Broker at endpoint [{agent_endpoint.base_url}{agent_endpoint.messages_path}]...")
 
                     gale_broker = GaleBrokerAPI(custom_config)
