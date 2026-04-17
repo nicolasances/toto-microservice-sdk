@@ -14,6 +14,7 @@ This is the Python SDK documentation.
    - [3.3. Load Secrets](#33-load-secrets)
    - [3.4. Custom Configurations](#34-custom-configurations)
    - [3.5. Using Cloud Storage](#35-using-cloud-storage)
+   - [3.6. Publish an Agent](#36-publish-an-agent)
 
 Other: 
 * [Build and Publish guide](./docs/buildpublish.md)
@@ -371,4 +372,107 @@ storage.delete_file(file_path)
 
 exec_context.logger.log(exec_context.cid, f"Deleted file: {file_path}")
 ```
+
+---
+### 3.6. Publish an Agent
+
+The SDK supports publishing **Gale Agents** — AI agents that can participate in conversations brokered by [Gale Broker](https://github.com/nicolasances/gale-broker). <br>
+An agent receives a user message, processes it (potentially using an LLM), and returns a response. It can also publish intermediate messages back to the conversation in real time while processing.
+
+#### Create a Conversational Agent
+
+Extend `GaleConversationalAgent` and implement two required methods:
+
+* `get_manifest()` — returns the agent's identity information
+* `on_message()` — handles an incoming conversation message and returns the response
+
+```python
+import uuid
+from totoms import GaleConversationalAgent, AgentConversationMessage, AgentManifest
+from totoms.gale.model.AgentConversationMessage import StreamInfo
+
+class MyAgent(GaleConversationalAgent):
+
+    def get_manifest(self) -> AgentManifest:
+        return AgentManifest(
+            agent_type="conversational",
+            agent_id="my-agent",                    # Unique agent identifier
+            human_friendly_name="My Agent",         # Display name shown to users
+        )
+
+    async def on_message(self, message: AgentConversationMessage) -> AgentConversationMessage:
+
+        stream_id = str(uuid.uuid4())
+
+        # Optionally publish an intermediate message to the conversation
+        # while you are still processing, to give the user early feedback.
+        await self.publish_message(AgentConversationMessage(
+            conversation_id=message.conversation_id,
+            message_id=str(uuid.uuid4()),
+            agent_id=message.agent_id,
+            message="Got your message, working on it!",
+            actor="agent",
+            stream=StreamInfo(stream_id=stream_id, sequence_number=1, last=False),
+        ))
+
+        # ... run your LLM / business logic here ...
+        result = "Here is my answer!"
+
+        # Return the final response
+        return AgentConversationMessage(
+            conversation_id=message.conversation_id,
+            message_id=message.message_id,
+            agent_id=message.agent_id,
+            message=result,
+            actor="agent",
+            stream=StreamInfo(stream_id=stream_id, sequence_number=2, last=True),
+        )
+```
+
+Key points:
+* `publish_message()` lets the agent stream intermediate messages to the client **while still processing**. This is useful to acknowledge receipt or provide progress updates before the final answer is ready.
+* The `stream` field is optional but recommended for conversational agents. Set `last=True` only on the final message.
+* `actor` should always be `"agent"` for messages sent by the agent.
+
+#### Register the Agent
+
+Add an `agents_configuration` block to your `TotoMicroserviceConfiguration`:
+
+```python
+from totoms import TotoMicroservice, TotoMicroserviceConfiguration, AgentsConfiguration
+from myservice.agent.my_agent import MyAgent
+import asyncio
+
+def get_microservice_config() -> TotoMicroserviceConfiguration:
+    return TotoMicroserviceConfiguration(
+        service_name="my-microservice",
+        base_path="/myservice",
+        environment=...,
+        custom_config=MyConfig,
+        agents_configuration=AgentsConfiguration(
+            agents=[
+                MyAgent,
+            ]
+        ),
+    )
+
+async def main():
+    microservice = await TotoMicroservice.init(get_microservice_config())
+    await microservice.start(port=8080)
+
+asyncio.run(main())
+```
+
+Multiple agents can be registered in the `agents` list.
+
+#### Required Environment Variables
+
+To integrate with Gale Broker the following environment variables **must** be set:
+
+| Variable | Description |
+|---|---|
+| `GALE_BROKER_URL` | The base URL of the Gale Broker service (e.g. `http://gale-broker:8080/galebroker`). Used to register the agent on startup and to publish messages back to conversations. |
+| `SERVICE_BASE_URL` | The publicly reachable base URL of **this** microservice, including the base path if any (e.g. `https://myservice.example.com/basepath`). Gale Broker uses this to know where to forward incoming conversation messages for the agent. |
+
+The SDK will raise an error at startup if either variable is not set when any agent is configured.
 

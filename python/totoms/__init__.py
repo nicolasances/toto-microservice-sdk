@@ -18,6 +18,8 @@ from totoms.TotoMicroservice import (
     MessageBusTopicConfig,
 )
 
+from totoms.model.AgentsConfiguration import AgentsConfiguration
+
 from totoms.api.TotoAPIController import (
     TotoAPIController,
     HTTPMethod,
@@ -67,6 +69,15 @@ from totoms.storage.CloudStorage import CloudStorage
 # Exceptions
 from totoms.model.exceptions.ValidationError import ValidationError
 
+# Agent support
+from totoms.gale.agent.GaleAgent import GaleAgent
+from totoms.gale.agent.GaleConversationalAgent import GaleConversationalAgent
+from totoms.gale.model.AgentManifest import AgentManifest
+from totoms.gale.model.AgentEndpoint import AgentEndpoint
+from totoms.gale.model.AgentConversationMessage import AgentConversationMessage
+from totoms.gale.integration.GaleBrokerAPI import GaleBrokerAPI
+from totoms.auth.TotoToken import new_toto_service_token
+
 __all__ = [
     # Microservice
     "TotoMicroservice",
@@ -107,4 +118,13 @@ __all__ = [
     "CloudStorage",
     # Exceptions
     "ValidationError",
+    # Agents
+    "AgentsConfiguration",
+    "GaleAgent",
+    "GaleConversationalAgent",
+    "AgentManifest",
+    "AgentEndpoint",
+    "AgentConversationMessage",
+    "GaleBrokerAPI",
+    "new_toto_service_token",
 ]

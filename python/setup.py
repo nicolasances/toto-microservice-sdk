@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="totoms",
-    version="1.1.0",
+    version="1.2.0",
     author="Toto",
     description="Toto Microservice SDK - Python framework for building microservices",
     long_description=long_description,

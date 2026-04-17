@@ -30,6 +30,7 @@ from totoms.evt.MessageBusConfig import (
     TopicIdentifier,
 )
 from totoms.evt.TotoMessageHandler import TotoMessageHandler
+from totoms.model.AgentsConfiguration import AgentsConfiguration
 
 @dataclass
 class APIConfiguration:
@@ -75,6 +76,7 @@ class TotoMicroserviceConfiguration:
     base_path: Optional[str] = None
     api_configuration: Optional[APIConfiguration] = None
     message_bus_configuration: Optional[MessageBusConfiguration] = None
+    agents_configuration: Optional[AgentsConfiguration] = None
 
 
 class TotoMicroservice:
@@ -217,6 +219,45 @@ class TotoMicroservice:
                 # Add the endpoint to the controller
                 api_controller.path(endpoint_config)
         
+        # AGENTS ----------------------
+        # Register Gale Agents if configured
+        # ---------------------------------
+        if init_config.agents_configuration and init_config.agents_configuration.agents:
+
+            from totoms.gale.model.AgentEndpoint import AgentEndpoint
+            from totoms.gale.integration.GaleBrokerAPI import GaleBrokerAPI, RegisterAgentRequest
+            from totoms.model.TotoAPIEndpoint import APIEndpoint as TotoAPIEndpoint
+
+            logger.log("INIT", f"Registering {len(init_config.agents_configuration.agents)} agents")
+
+            for agent_class in init_config.agents_configuration.agents:
+
+                agent = agent_class(message_bus, custom_config)
+                manifest = agent.get_manifest()
+
+                agent_endpoint = AgentEndpoint.from_agent_manifest(manifest)
+
+                # Register the POST endpoint for the agent
+                api_controller.path(TotoAPIEndpoint(
+                    method="POST",
+                    path=agent_endpoint.messages_path,
+                    delegate=agent.on_request,
+                ))
+
+                # Register the agent with the Gale Broker
+                try:
+                    logger.log("INIT", f"Registering agent [{manifest.human_friendly_name}] with Gale Broker at endpoint [{agent_endpoint.base_url}{agent_endpoint.messages_path}]...")
+
+                    gale_broker = GaleBrokerAPI(custom_config)
+                    gale_broker.register_agent(RegisterAgentRequest(
+                        agent_manifest=manifest,
+                        endpoint=agent_endpoint,
+                    ))
+                except Exception as e:
+                    logger.log("INIT", f"Failed to register agent [{manifest.human_friendly_name}] with Gale Broker: {e}")
+
+            logger.log("INIT", f"Registered {len(init_config.agents_configuration.agents)} agents")
+
         # Create the singleton instance
         cls._instance = cls(init_config, custom_config, api_controller, message_bus)
         
