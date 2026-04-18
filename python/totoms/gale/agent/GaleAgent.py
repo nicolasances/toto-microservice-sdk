@@ -12,6 +12,7 @@ class GaleAgent(ABC):
     def __init__(self, message_bus: Optional[TotoMessageBus], config: TotoControllerConfig):
         self.message_bus = message_bus
         self.config = config
+        self._auth_header: Optional[str] = None
 
     @abstractmethod
     def get_manifest(self) -> AgentManifest:

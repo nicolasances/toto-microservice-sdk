@@ -36,6 +36,9 @@ class GaleConversationalAgent(GaleAgent):
         Validates the request, parses the body into an AgentConversationMessage,
         delegates to ``on_message()``, and returns the response as JSON.
         """
+        # Capture the Authorization header so subclasses can use it
+        self._auth_header = request.headers.get("Authorization")
+
         # Validate the request (auth, correlation id, etc.)
         validation_result = await validate_request(request, self.config)
 
