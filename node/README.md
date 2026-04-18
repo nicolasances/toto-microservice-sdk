@@ -423,6 +423,35 @@ const config: TotoMicroserviceConfiguration = {
 };
 ```
 
+#### MCP Server Endpoint
+
+When MCP is enabled, the microservice exposes the MCP server on the following path:
+
+```
+POST {basePath}/mcp
+```
+
+For example, a service with `basePath: '/tometopics'` exposes the MCP server at:
+
+```
+POST /tometopics/mcp
+```
+
+The MCP server uses the **Streamable HTTP transport** in **stateless mode** (no session management). To configure an MCP client (e.g. Claude Desktop, VS Code Copilot, or any MCP-compatible client), point it to this endpoint:
+
+```json
+{
+  "mcpServers": {
+    "tome-topics": {
+      "type": "http",
+      "url": "https://<your-host>/tometopics/mcp"
+    }
+  }
+}
+```
+
+> **Note**: Replace `<your-host>` and `tometopics` with your actual host and `basePath`.
+
 #### Key Points
 
 * **Dual Purpose**: Delegates extending `TotoMCPDelegate` can serve both as REST API endpoints AND as MCP tools
