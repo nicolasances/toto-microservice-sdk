@@ -136,7 +136,7 @@ export class TotoMicroservice {
             let mcpServer: MCPServer | undefined = undefined;
             if (config.mcpConfiguration?.enableMCP) {
 
-                mcpServer = new MCPServer(apiController, config.mcpConfiguration.serverConfiguration, customConfig, { basePath: config.basePath });
+                mcpServer = new MCPServer(apiController, config.mcpConfiguration.serverConfiguration, customConfig, { basePath: config.basePath }, bus);
 
             }
 

@@ -2,7 +2,7 @@
 import express from "express";
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { Logger, TotoAPIController, TotoControllerConfig, TotoControllerOptions, UserContext, Validator } from "..";
+import { Logger, TotoAPIController, TotoControllerConfig, TotoControllerOptions, TotoMessageBus, UserContext, Validator } from "..";
 import { MCPServerConfiguration } from "./MCPConfiguration";
 import { TotoMCPDelegate } from "./TotoMCPDelegate";
 
@@ -13,12 +13,14 @@ export class MCPServer {
     private config: MCPServerConfiguration;
     private apiControllerConfig: TotoControllerConfig;
     private controllerOptions: TotoControllerOptions;
+    private messageBus: TotoMessageBus;
 
-    constructor(apiController: TotoAPIController, config: MCPServerConfiguration, apiControllerConfig: TotoControllerConfig, controllerOptions: TotoControllerOptions) {
+    constructor(apiController: TotoAPIController, config: MCPServerConfiguration, apiControllerConfig: TotoControllerConfig, controllerOptions: TotoControllerOptions, messageBus: TotoMessageBus) {
 
         this.config = config;
         this.apiControllerConfig = apiControllerConfig;
         this.controllerOptions = controllerOptions;
+        this.messageBus = messageBus;
 
         // MCP Server Setup - Stateless mode (each request gets fresh server/transport)
         this.mcpApp = apiController.app; // Use the same Express app as the API controller to share the server and port
@@ -33,7 +35,7 @@ export class MCPServer {
 
             const tools = this.config.tools.map((ToolClass) => {
 
-                return new ToolClass(undefined as any, this.apiControllerConfig)}   // If I ever need a MessageBus in a tool, I should add it here, for now it's undefined
+                return new ToolClass(this.messageBus, this.apiControllerConfig)}
             );
 
             this.registerTools(tools);
