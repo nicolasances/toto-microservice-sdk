@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "Toto", email = "info@toto.com"},
+    {name = "nicolasances", email = "info@toto.com"},
 ]
 keywords = ["microservices", "fastapi", "cloud", "message-bus", "pubsub"]
 classifiers = [
@@ -60,3 +60,18 @@ packages = ["totoms"]
 
 [tool.setuptools.package-data]
 totoms = ["py.typed"]
+
+[tool.bumpversion]
+current_version = "1.4.0"
+commit = false
+tag = false
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "setup.py"
+search = 'version="{current_version}"'
+replace = 'version="{new_version}"'

@@ -9,7 +9,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 setup(
     name="totoms",
     version="1.4.0",
-    author="Toto",
+    author="nicolasances",
     description="Toto Microservice SDK - Python framework for building microservices",
     long_description=long_description,
     long_description_content_type="text/markdown",
