@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Any, List, Literal, Optional
 
 
 @dataclass
@@ -26,6 +26,7 @@ class AgentConversationMessage:
     message: str
     stream: Optional[StreamInfo] = None
     extras: Optional[MessageExtras] = None
+    chain_of_thought: Optional[List[Any]] = None
 
     def to_dict(self) -> dict:
         """Serialize to a dictionary for JSON transmission."""
@@ -46,6 +47,8 @@ class AgentConversationMessage:
             result["extras"] = {
                 "subjectEmail": self.extras.subject_email,
             }
+        if self.chain_of_thought is not None:
+            result["chainOfThought"] = self.chain_of_thought
         return result
 
     @staticmethod
@@ -64,6 +67,8 @@ class AgentConversationMessage:
         if data.get("extras"):
             extras = MessageExtras(subject_email=data["extras"].get("subjectEmail"))
 
+        chain_of_thought = data.get("chainOfThought")
+
         return AgentConversationMessage(
             conversation_id=data["conversationId"],
             message_id=data["messageId"],
@@ -72,4 +77,5 @@ class AgentConversationMessage:
             message=data["message"],
             stream=stream,
             extras=extras,
+            chain_of_thought=chain_of_thought,
         )

@@ -20,4 +20,11 @@ export interface AgentConversationMessage extends TotoRequest {
     extras?: {
         subjectEmail?: string;     // Email of the user subject of the interactions (useful for personalization or follow-up)
     }
+
+    /**
+     * Raw LLM content blocks (thinking, text, tool-use, etc.) capturing the full
+     * chain-of-thought of the agent's reasoning. Optional — only set when the
+     * agent uses an LLM with thinking/reasoning enabled.
+     */
+    chainOfThought?: any[];
 }
