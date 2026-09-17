@@ -19,6 +19,7 @@ This is the NodeJS SDK documentation.
 
 Other: 
 * [Build and Deploy on NPM](./docs/buildpublish.md)
+* [Local Development & Testing (npm link)](#local-development--testing-npm-link)
 
 ## 1. Installation
 
@@ -683,6 +684,46 @@ Request validation framework with support for:
 ### Azure
 - **Messaging**: Service Bus (in development)
 - **Secrets**: Key Vault (in development)
+
+## Local Development & Testing (npm link)
+
+While working on the SDK, you'll often want to test your changes live in a consuming microservice (e.g. `toto-ms-xxx`) without publishing a new version to npm every time. The simplest way to do this is `npm link`.
+
+**1. Build the SDK and watch for changes**
+
+```bash
+cd toto-microservice-sdk/node
+npm run build          # build once
+npx tsc --watch        # keep rebuilding dist/ as you edit
+```
+
+**2. Register the SDK as a global link**
+
+```bash
+# from toto-microservice-sdk/node
+npm link
+```
+
+**3. Link it into the consuming project**
+
+```bash
+# from the consuming microservice, e.g. gale-dr-dispatcher
+npm link totoms
+```
+
+This replaces `node_modules/totoms` with a symlink to your local SDK checkout. Since `tsc --watch` keeps `dist/` up to date, every change you make in the SDK is picked up immediately by the consuming project — no publish, no reinstall.
+
+**4. Undo it when you're done**
+
+```bash
+# from the consuming microservice
+npm unlink totoms
+npm install
+```
+
+This restores the published version of `totoms` from the registry.
+
+> **Note**: If `npm link` ever misbehaves (e.g. due to dependency duplication), an alternative is to point directly at the local path instead: `"totoms": "file:../toto-microservice-sdk/node"` in the consumer's `package.json`, followed by `npm install`. This is more explicit and portable, but you'll need to re-run `npm install` after each SDK change rather than just relying on the watch/symlink.
 
 ## License
 
