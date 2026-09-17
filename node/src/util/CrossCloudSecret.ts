@@ -78,6 +78,11 @@ export class SecretsManager {
 
         const gcpPID = (this.hyperscalerConfiguration as GCPConfiguration).gcpProjectId;
 
+        if (!gcpPID) {
+            logger.compute("INIT", "There is no GCP Project set. Cannot load Secrets.", "error")
+            return "";
+        }
+
         logger.compute("INIT", `Retrieving secret ${secretName} from GCP Secret Manager in project ${gcpPID}`);
     
         const client = new SecretManagerServiceClient();

@@ -44,6 +44,7 @@ export class TotoMicroservice {
             });
 
             topicNames = await Promise.all(topicNamesPromises);
+
         }
 
         // Load the customer configuration
