@@ -172,7 +172,7 @@ export interface MessageBusConfiguration {
 
 export function getHyperscalerConfiguration(): GCPConfiguration | AWSConfiguration | AzureConfiguration {
 
-    const hyperscaler = process.env.HYPERSCALER as SupportedHyperscalers || "aws";
+    const hyperscaler = process.env.HYPERSCALER as SupportedHyperscalers || "gcp";
 
     switch (hyperscaler) {
         case "gcp":
